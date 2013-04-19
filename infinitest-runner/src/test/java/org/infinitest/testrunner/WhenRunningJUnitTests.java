@@ -27,97 +27,154 @@
  */
 package org.infinitest.testrunner;
 
+import org.infinitest.JUnit4Configuration;
+import org.infinitest.MissingClassException;
+import org.infinitest.testrunner.categories.Fast;
+import org.infinitest.testrunner.categories.Manual;
+import org.infinitest.testrunner.categories.Mixed;
+import org.infinitest.testrunner.categories.Slow;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import static com.google.common.collect.Iterables.*;
-import static org.infinitest.testrunner.TestEvent.*;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.infinitest.testrunner.TestEvent.methodFailed;
 import static org.junit.Assert.*;
 
-import org.infinitest.*;
-import org.junit.*;
-
 public class WhenRunningJUnitTests {
-	private JUnit4Runner runner;
-	private static final Class<?> TEST_CLASS = TestThatThrowsExceptionInConstructor.class;
+    private static final Class<?> TEST_CLASS = TestThatThrowsExceptionInConstructor.class;
+    private JUnit4Runner runner;
+    private JUnit4Configuration config;
 
-	@Before
-	public void inContext() {
-		TestThatThrowsExceptionInConstructor.fail = true;
-		FailingTest.fail = true;
-		TestNGTest.fail = true;
-		runner = new JUnit4Runner();
-	}
+    @Before
+    public void inContext() {
+        TestThatThrowsExceptionInConstructor.fail = true;
+        FailingTest.fail = true;
+        TestNGTest.fail = true;
+        JUnit4TestWithCategories.fail = false;
+        runner = new JUnit4Runner();
+        config = new JUnit4Configuration();
+        runner.setJUnit4Configuration(config);
+    }
 
-	@After
-	public void cleanup() {
-		TestThatThrowsExceptionInConstructor.fail = false;
-		FailingTest.fail = false;
-	}
+    @After
+    public void cleanup() {
+        TestThatThrowsExceptionInConstructor.fail = false;
+        FailingTest.fail = false;
+    }
 
-	@Test
-	public void shouldFireNoEventsIfAllMethodsPass() {
-		TestResults results = runner.runTest(PassingTestCase.class.getName());
-		assertTrue(isEmpty(results));
-	}
+    @Test
+    public void shouldFireNoEventsIfAllMethodsPass() {
+        TestResults results = runner.runTest(PassingTestCase.class.getName());
+        assertTrue(isEmpty(results));
+    }
 
-	@Test
-	public void shouldFireEventsToReportFailingResults() {
-		TestResults results = runner.runTest(FailingTest.class.getName());
-		TestEvent expectedEvent = methodFailed("", FailingTest.class.getName(), "shouldFail", new AssertionError());
-		assertEventsEquals(expectedEvent, getOnlyElement(results));
-	}
+    @Test
+    public void shouldFireEventsToReportFailingResults() {
+        TestResults results = runner.runTest(FailingTest.class.getName());
+        TestEvent expectedEvent = methodFailed("", FailingTest.class.getName(), "shouldFail", new AssertionError());
+        assertEventsEquals(expectedEvent, getOnlyElement(results));
+    }
 
-	@Test
-	public void shouldIgnoreSuiteMethods() {
-		TestResults results = runner.runTest(JUnit3TestWithASuiteMethod.class.getName());
-		assertTrue(isEmpty(results));
-	}
+    @Test
+    public void shouldIgnoreSuiteMethods() {
+        TestResults results = runner.runTest(JUnit3TestWithASuiteMethod.class.getName());
+        assertTrue(isEmpty(results));
+    }
 
-	@Test
-	public void shouldDetectFailureInBeforeMethod() {
-		TestResults results = runner.runTest(FailingJUnit4TestWithBefore.class.getName());
-		assertFalse(isEmpty(results));
-	}
+    @Test
+    public void shouldDetectFailureInBeforeMethod() {
+        TestResults results = runner.runTest(FailingJUnit4TestWithBefore.class.getName());
+        assertFalse(isEmpty(results));
+    }
 
-	@Test
-	public void shouldDetectFailureInBeforeClassMethod() {
-		TestResults results = runner.runTest(FailingJUnit4TestWithBeforeClass.class.getName());
-		assertFalse(isEmpty(results));
-	}
+    @Test
+    public void shouldDetectFailureInBeforeClassMethod() {
+        TestResults results = runner.runTest(FailingJUnit4TestWithBeforeClass.class.getName());
+        assertFalse(isEmpty(results));
+    }
 
-	@Test
-	public void shouldTreatUninstantiableTestsAsFailures() {
-		Iterable<TestEvent> events = runner.runTest(TEST_CLASS.getName());
-		TestEvent expectedEvent = methodFailed(null, TEST_CLASS.getName(), "shouldPass", new IllegalStateException());
-		assertEventsEquals(expectedEvent, getOnlyElement(events));
-	}
+    @Test
+    public void shouldTreatUninstantiableTestsAsFailures() {
+        Iterable<TestEvent> events = runner.runTest(TEST_CLASS.getName());
+        TestEvent expectedEvent = methodFailed(null, TEST_CLASS.getName(), "shouldPass", new IllegalStateException());
+        assertEventsEquals(expectedEvent, getOnlyElement(events));
+    }
 
-	@Test
-	public void shouldIncludeTimingsForMethodRuns() {
-		TestResults results = runner.runTest(MultiTest.class.getName());
-		assertEquals(2, size(results.getMethodStats()));
-		MethodStats methodStats = get(results.getMethodStats(), 0);
-		assertTrue(methodStats.startTime <= methodStats.stopTime);
-	}
+    @Test
+    public void shouldIncludeTimingsForMethodRuns() {
+        TestResults results = runner.runTest(MultiTest.class.getName());
+        assertEquals(2, size(results.getMethodStats()));
+        MethodStats methodStats = get(results.getMethodStats(), 0);
+        assertTrue(methodStats.startTime <= methodStats.stopTime);
+    }
 
-	@Test(expected = MissingClassException.class)
-	public void shouldThrowExceptionIfTestDoesNotExist() {
-		runner.runTest("test");
-	}
+    @Test(expected = MissingClassException.class)
+    public void shouldThrowExceptionIfTestDoesNotExist() {
+        runner.runTest("test");
+    }
 
-	@Test
-	public void shouldSupportTestNG() {
-		Iterable<TestEvent> events = runner.runTest(TestNGTest.class.getName());
-		TestEvent expectedEvent = methodFailed(TestNGTest.class.getName(), "shouldFail", new AssertionError("expected [false] but found [true]"));
-		assertEventsEquals(expectedEvent, getOnlyElement(events));
-	}
+    @Test
+    public void shouldSupportTestNG() {
+        Iterable<TestEvent> events = runner.runTest(TestNGTest.class.getName());
+        TestEvent expectedEvent = methodFailed(TestNGTest.class.getName(), "shouldFail", new AssertionError("expected [false] but found [true]"));
+        assertEventsEquals(expectedEvent, getOnlyElement(events));
+    }
 
-	private void assertEventsEquals(TestEvent expected, TestEvent actual) {
-		assertEquals(expected, actual);
-		assertEquals(expected.getMessage(), actual.getMessage());
-		assertEquals(expected.getType(), actual.getType());
-		assertEquals(expected.getErrorClassName(), actual.getErrorClassName());
-	}
+    @Test
+    public void shouldFailIfBadTestsAreNotFiltered() throws Exception {
+        JUnit4TestWithCategories.fail = true;
+        final Set<String> failingMethods = new HashSet<String>(Arrays.asList("shouldNotBeTestedCategory1", "shouldNotBeTestedCategory2", "shouldNotBeTestedCategory3", "shouldNoBeTestedDueToInheritanceOnFilteredCategory"));
+        TestResults results = runner.runTest(JUnit4TestWithCategories.class.getName());
+        int counter = 0;
+        for (TestEvent testEvent : results) {
+            counter++;
+            assertThat(testEvent.getTestMethod()).isIn(failingMethods);
+            assertThat(testEvent.getFullErrorClassName()).isEqualTo(AssertionError.class.getName());
+            assertThat(testEvent.getTestName()).isEqualTo(JUnit4TestWithCategories.class.getName());
+        }
+        assertThat(counter).isEqualTo(failingMethods.size());
+    }
 
-	public void testCaseStarting(TestEvent event) {
-		fail("Native runner should never fire this");
-	}
+    @Test
+    public void shouldNotFailWithFilteredCategories() {
+        JUnit4TestWithCategories.fail = true;
+        config.setExcludedCategories(Slow.class.getName() + ", " + Manual.class.getName());
+        TestResults results = runner.runTest(JUnit4TestWithCategories.class.getName());
+        assertThat(results).isEmpty();
+    }
+
+    @Test
+    public void shouldExecuteOnlyTheSpecifiedGroup() {
+        JUnit4TestWithCategories.fail = true;
+        config.setCategories(Slow.class.getName());
+        TestResults results = runner.runTest(JUnit4TestWithCategories.class.getName());
+        assertEquals(3, size(results));
+        assertThat(results).hasSize(3);
+
+        config.setCategories(Fast.class.getName());
+        results = runner.runTest(JUnit4TestWithCategories.class.getName());
+        assertThat(results).isEmpty();
+    }
+
+    @Test
+    public void combineIncludedAndExcludedGroups() {
+        JUnit4TestWithCategories.fail = true;
+        config.setCategories(Slow.class.getName());
+        config.setExcludedCategories(Mixed.class.getName());
+        TestResults results = runner.runTest(JUnit4TestWithCategories.class.getName());
+        assertThat(results).hasSize(2);
+    }
+
+    private void assertEventsEquals(TestEvent expected, TestEvent actual) {
+        assertEquals(expected, actual);
+        assertEquals(expected.getMessage(), actual.getMessage());
+        assertEquals(expected.getType(), actual.getType());
+        assertEquals(expected.getErrorClassName(), actual.getErrorClassName());
+    }
 }

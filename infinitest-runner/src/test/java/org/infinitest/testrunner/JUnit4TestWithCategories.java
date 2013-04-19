@@ -1,0 +1,81 @@
+/*
+ * Infinitest, a Continuous Test Runner.
+ *
+ * Copyright (C) 2010-2013
+ * "Ben Rady" <benrady@gmail.com>,
+ * "Rod Coffin" <rfciii@gmail.com>,
+ * "Ryan Breidenbach" <ryan.breidenbach@gmail.com>
+ * "David Gageot" <david@gageot.net>, et al.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+package org.infinitest.testrunner;
+
+import org.infinitest.testrunner.categories.*;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
+import static org.testng.Assert.*;
+
+/**
+ * @author tarek.turki@gmail.com
+ * Date: 4/16/13
+ * Time: 12:15 AM
+ */
+public class JUnit4TestWithCategories {
+    public static boolean fail;
+    @Test
+    public void hallo() {
+        // left is calculated result, right is expected result
+        assertEquals("actual", "actual");
+    }
+
+    @Category({Slow.class})
+    @Test
+    public void shouldNotBeTestedCategory1() {
+        assertFalse(fail);
+    }
+
+    @Category({Manual.class})
+    @Test
+    public void shouldNotBeTestedCategory3() {
+        assertFalse(fail);
+    }
+
+
+    @Category({Fast.class})
+    @Test
+    public void doSomeTest() {
+        long nano = System.nanoTime();
+        long nano2 = System.nanoTime();
+        assertTrue(nano2 >= nano);
+    }
+
+    @Category({Mixed.class, Slow.class})
+    @Test
+    public void shouldNotBeTestedCategory2() {
+        assertFalse(fail);
+    }
+
+    @Category({Functional.class})
+    @Test
+    public void shouldNoBeTestedDueToInheritanceOnFilteredCategory() {
+        assertFalse(fail);
+    }
+}

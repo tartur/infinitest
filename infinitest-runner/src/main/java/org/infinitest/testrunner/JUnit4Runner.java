@@ -27,20 +27,29 @@
  */
 package org.infinitest.testrunner;
 
-import static org.junit.runner.Request.*;
-
-import java.lang.annotation.*;
-import java.lang.reflect.*;
-import java.util.*;
-
-import junit.framework.*;
-
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import org.infinitest.*;
-import org.junit.runner.*;
-import org.testng.*;
+import org.junit.runner.JUnitCore;
+import org.junit.runner.Request;
+import org.junit.runner.Runner;
+import org.testng.ITestContext;
+import org.testng.ITestListener;
+import org.testng.ITestResult;
+import org.testng.TestNG;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+import static org.junit.runner.Request.classWithoutSuiteMethod;
 
 public class JUnit4Runner implements NativeRunner {
 	private TestNGConfiguration config = null;
+    private JUnit4Configuration junit4Configuration = null;
 
 	@Override
 	public TestResults runTest(String testClass) {
@@ -70,10 +79,21 @@ public class JUnit4Runner implements NativeRunner {
 		if (isJUnit3TestCase(clazz) && cannotBeInstantiated(clazz)) {
 			core.run(new UninstantiableJUnit3TestRequest(clazz));
 		} else {
-			core.run(classWithoutSuiteMethod(clazz));
+            runJUnit4AccordingToSettings(core,clazz);
 		}
 		return eventTranslator.getTestResults();
 	}
+
+
+    private void runJUnit4AccordingToSettings(JUnitCore core, Class<?> clazz) {
+        if (junit4Configuration == null) {
+            junit4Configuration = new JUnit4Configurator().getConfig();
+        }
+        JUnit4CategoryFilter filter = new JUnit4CategoryFilter();
+        filter.setIncludedCategories(junit4Configuration.getCategories());
+        filter.setExcludedCategories(junit4Configuration.getExcludedCategories());
+        core.run(classWithoutSuiteMethod(clazz).filterWith(filter));
+    }
 
 	private void addTestNGSettings(TestNG core) {
 		if (config == null) {
@@ -188,4 +208,8 @@ public class JUnit4Runner implements NativeRunner {
 	public void setTestNGConfiguration(TestNGConfiguration configuration) {
 		config = configuration;
 	}
+
+    public void setJUnit4Configuration(JUnit4Configuration junit4Configuration) {
+        this.junit4Configuration = junit4Configuration;
+    }
 }

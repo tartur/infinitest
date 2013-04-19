@@ -31,7 +31,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-public class TestNGConfigurator {
+public class TestNGConfigurator extends Configurator<TestNGConfiguration> {
 	private static final String SUFFIX = "\\s?=\\s?(.+)";
 	private static final String PREFIX = "^\\s*#+\\s?";
 	private static final String EXCLUDED_GROUPS = "excluded-groups";
@@ -40,67 +40,26 @@ public class TestNGConfigurator {
 	private static final Pattern EXCLUDED = Pattern.compile(PREFIX + EXCLUDED_GROUPS + SUFFIX);
 	private static final Pattern INCLUDED = Pattern.compile(PREFIX + INCLUDED_GROUPS + SUFFIX);
 	private static final Pattern LISTENER = Pattern.compile(PREFIX + LISTENERS + SUFFIX);
-	private static final File FILTERFILE = new File("infinitest.filters");
 
 	private final TestNGConfiguration testNGConfiguration;
-	private File file = null;
 
-	public TestNGConfigurator() {
-		testNGConfiguration = new TestNGConfiguration();
-		if (file == null) {
-			file = FILTERFILE;
-		}
-		updateFilterList();
+    public TestNGConfigurator() {
+        this(null);
 	}
 
 	public TestNGConfigurator(File filterFile) {
+        super(filterFile);
 		testNGConfiguration = new TestNGConfiguration();
-		file = filterFile;
-
 		updateFilterList();
 	}
 
-	public void updateFilterList() {
-		if (file == null) {
-			return;
-		}
-
-		if (file.exists()) {
-			tryToReadFilterFile();
-		}
-	}
-
-	public TestNGConfiguration getConfig() {
+    @Override
+    public TestNGConfiguration getConfig() {
 		return testNGConfiguration;
 	}
 
-	private void tryToReadFilterFile() {
-		try {
-			readFilterFile();
-		} catch (IOException e) {
-			throw new RuntimeException("Something horrible happened to the filter file", e);
-		}
-	}
-
-	private void readFilterFile() throws IOException {
-		BufferedReader reader = null;
-		try {
-			reader = new BufferedReader(new FileReader(file));
-			String line;
-			do {
-				line = reader.readLine();
-				if (line != null) {
-					addFilter(line);
-				}
-			} while (line != null);
-		} finally {
-			if (reader != null) {
-				reader.close();
-			}
-		}
-	}
-
-	private void addFilter(String line) {
+    @Override
+    protected void addFilter(String line) {
 		Matcher matcher = EXCLUDED.matcher(line.trim());
 		if (matcher.matches()) {
 			String excludedGroups = matcher.group(1);
