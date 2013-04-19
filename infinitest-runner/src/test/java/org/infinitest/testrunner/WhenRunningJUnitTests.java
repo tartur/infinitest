@@ -150,11 +150,10 @@ public class WhenRunningJUnitTests {
     }
 
     @Test
-    public void shouldExecuteOnlyTheSpecifiedGroup() {
+    public void shouldExecuteOnlyTheSpecifiedCategory() {
         JUnit4TestWithCategories.fail = true;
         config.setCategories(Slow.class.getName());
         TestResults results = runner.runTest(JUnit4TestWithCategories.class.getName());
-        assertEquals(3, size(results));
         assertThat(results).hasSize(3);
 
         config.setCategories(Fast.class.getName());
@@ -163,12 +162,24 @@ public class WhenRunningJUnitTests {
     }
 
     @Test
-    public void combineIncludedAndExcludedGroups() {
+    public void combineIncludedAndExcludedCategories() {
         JUnit4TestWithCategories.fail = true;
         config.setCategories(Slow.class.getName());
         config.setExcludedCategories(Mixed.class.getName());
         TestResults results = runner.runTest(JUnit4TestWithCategories.class.getName());
         assertThat(results).hasSize(2);
+    }
+
+    @Test
+    public void shouldHandleExcludedCategoryAnnotatedOnClass() throws Exception {
+        SlowJUnit4Test.fail = true;
+        FastJUnit4Test.fail = true;
+        config.setExcludedCategories(Slow.class.getName());
+        TestResults results = runner.runTest(SlowJUnit4Test.class.getName());
+        assertThat(results).isEmpty();
+
+        results = runner.runTest(FastJUnit4Test.class.getName());
+        assertThat(results).hasSize(1);
     }
 
     private void assertEventsEquals(TestEvent expected, TestEvent actual) {

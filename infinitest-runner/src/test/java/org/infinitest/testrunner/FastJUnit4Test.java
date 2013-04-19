@@ -1,6 +1,8 @@
 package org.infinitest.testrunner;
 
+import org.fest.assertions.Assertions;
 import org.infinitest.testrunner.categories.Slow;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -11,4 +13,10 @@ import org.junit.experimental.categories.Category;
  */
 @Category(Slow.class)
 public class FastJUnit4Test {
+    public static boolean fail;
+
+    @Test
+    public void hasNoCategorySet() throws Exception {
+        Assertions.assertThat(fail).isFalse();
+    }
 }
