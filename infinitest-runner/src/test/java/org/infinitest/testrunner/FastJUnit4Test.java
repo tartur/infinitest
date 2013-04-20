@@ -27,23 +27,23 @@
  */
 package org.infinitest.testrunner;
 
-import org.fest.assertions.Assertions;
-import org.infinitest.testrunner.categories.Slow;
+import org.infinitest.testrunner.categories.Fast;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.junit.Assert.assertFalse;
+
 /**
- * SlowJUnit4Test defines
- * User: tartur
- * Date: 4/19/13
- * Time: 1:39 AM
+ * @author tarek.turki@gmail.com
+ *         Date: 4/19/13
+ *         Time: 1:39 AM
  */
-@Category(Slow.class)
+@Category(Fast.class)
 public class FastJUnit4Test {
     public static boolean fail;
 
     @Test
     public void hasNoCategorySet() throws Exception {
-        Assertions.assertThat(fail).isFalse();
+        assertFalse(fail);
     }
 }

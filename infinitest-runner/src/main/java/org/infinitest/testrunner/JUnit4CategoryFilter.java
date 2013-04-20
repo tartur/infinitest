@@ -36,9 +36,10 @@ import java.util.*;
 /**
  * JUnit4CategoryFilter is a JUnit4 filter implementation
  * that will be used to filter tests that were filtered through the settings.
+ *
  * @author tarek.turki@gmail.com
- * Date: 4/17/13
- * Time: 11:14 PM
+ *         Date: 4/17/13
+ *         Time: 11:14 PM
  */
 public class JUnit4CategoryFilter extends Filter {
 
@@ -61,8 +62,16 @@ public class JUnit4CategoryFilter extends Filter {
             return false;
         } else {
             Category category = description.getAnnotation(Category.class);
-            return shouldRunCategory(category);
+            Category classCategory = testClassDescription(description).getAnnotation(Category.class);
+            return shouldRunCategory(category, classCategory);
         }
+    }
+
+    private Description testClassDescription(Description description) {
+        Class<?> testClass = description.getTestClass();
+        if (testClass == null)
+            return null;
+        return Description.createSuiteDescription(testClass);
     }
 
     @Override
@@ -73,19 +82,23 @@ public class JUnit4CategoryFilter extends Filter {
     /**
      * Excluded wins over included
      *
-     * @param category the category that values would be verified
+     * @param categories the categories that values would be verified
      * @return true if should run this category according to settings and false otherwise
      */
-    private boolean shouldRunCategory(Category category) {
+    private boolean shouldRunCategory(Category... categories) {
         boolean isExcluded = false;
         boolean isIncluded = true;
-        if (category != null) {
-            List<Class<?>> categories = Arrays.asList(category.value());
+        if (categories.length > 0) {
+            List<Class<?>> categoriesList = new ArrayList<Class<?>>();
+            for (Category category : categories) {
+                if (category != null)
+                    categoriesList.addAll(Arrays.asList(category.value()));
+            }
             if (includedCategories != null) {
-                isIncluded = hasIncludedCategory(categories);
+                isIncluded = hasIncludedCategory(categoriesList);
             }
             if (excludedCategories != null) {
-                isExcluded = hasExcludedCategory(categories);
+                isExcluded = hasExcludedCategory(categoriesList);
             }
         }
         return !isExcluded && isIncluded;
